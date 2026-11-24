@@ -1,116 +1,387 @@
-> **v2.2 response color hotfix:** Assistant answer elements now receive scoped inline blue text overrides, including `-webkit-text-fill-color`. The styling diagnostics display computed colors. See [v2.2 changes](docs/V2_2_RESPONSE_STYLE_HOTFIX.md). Live verification is required.
+# WalledGuard DLP — Standalone Desktop Data Loss Prevention
 
-# WalledGuard DLP — Standalone Desktop GenAI Data Loss Prevention
+**Version:** 2.3  
+**Technology:** Electron, Node.js, Google Chrome, Chrome DevTools Protocol (CDP), PDF.js, Tesseract.js  
+**Supported Platforms:** ChatGPT Web and Perplexity Web
 
-**Rebuilt v2.1** — desktop application that opens a **dedicated real Google Chrome window** and monitors ChatGPT and Perplexity with the Chrome DevTools Protocol (CDP). No browser extension, add-on, or Chrome plugin is installed or required.
+**GitHub Repository:**  
+https://github.com/AbhishekAgrahari22/walledguard-dlp
 
-This edition replaces the earlier Electron-embedded ChatGPT window, which could render the homepage but returned **"Unable to connect"** on message submission in the original user's environment. Using an actual Chrome window removes one important embedded-browser compatibility variable. It does **not** guarantee the third-party websites will accept every session, authentication method, or request. Verify live functionality on your Mac before submission.
+## Demonstration Video
 
-## Quick start on macOS (VS Code terminal)
+A screen recording of the WalledGuard DLP desktop application is available through GitHub Releases.
 
-**Prerequisites:** Node.js **22+**, npm, and **Google Chrome installed** in `/Applications` (or supply its executable path with `WALLEDGUARD_CHROME_PATH`).
+**[View or Download the WalledGuard DLP Demonstration](https://github.com/AbhishekAgrahari22/walledguard-dlp/releases/tag/v1.0-demo)**
+
+**Video filename:** `WalledGuard_DLP_Demo.mov`
+
+The demonstration covers the application's browser integration, sensitive-content detection, and native confirmation workflow. Refer to the recording for the specific ChatGPT and Perplexity scenarios demonstrated.
+
+---
+
+## 1. Project Overview
+
+WalledGuard DLP is a standalone desktop Data Loss Prevention (DLP) application designed to help prevent accidental disclosure of confidential information to public Generative AI platforms.
+
+The application monitors user interactions within dedicated Google Chrome sessions opened and controlled by WalledGuard.
+
+It supports:
+
+- ChatGPT Web: https://chatgpt.com
+- Perplexity Web: https://www.perplexity.ai
+
+WalledGuard examines text prompts and supported file uploads for the predefined sensitive marker:
+
+`WALLED_SENSITIVE`
+
+If sensitive content is detected, the application displays a native desktop confirmation dialog before allowing the corresponding action to proceed.
+
+The solution is built using Electron and managed Google Chrome. It does not require a browser extension, add-on, or plugin.
+
+---
+
+## 2. Key Features
+
+### 2.1 Text Prompt Monitoring
+
+WalledGuard monitors outgoing text prompts in the supported AI websites.
+
+- Prompts without `WALLED_SENSITIVE` proceed normally.
+- Prompts containing `WALLED_SENSITIVE` trigger a native confirmation dialog.
+- The dialog identifies the detected content as a text prompt.
+- The user can choose **Continue** or **Cancel**.
+
+### 2.2 File Upload Inspection
+
+The application inspects supported files before allowing uploads through the monitored browser.
+
+Supported file formats:
+
+| File Type | Inspection Method |
+|---|---|
+| TXT | UTF-8 and UTF-16 text decoding |
+| PDF | PDF.js text extraction and OCR |
+| Images | Tesseract.js optical character recognition (OCR) |
+
+When the marker is detected, WalledGuard displays the affected filename and asks the user to confirm the action.
+
+### 2.3 Native Desktop Confirmation
+
+The application uses Electron's native desktop dialog functionality.
+
+**Continue**
+- Allows the original prompt or file to proceed.
+- Preserves the original content.
+
+**Cancel**
+- Blocks the current prompt submission or file upload.
+- Allows the user to edit, retry, or resubmit later.
+
+### 2.4 AI Response Text Customization
+
+WalledGuard includes functionality for changing AI-generated response text to blue in ChatGPT and Perplexity.
+
+The implementation uses DOM-based selectors and Chrome DevTools Protocol stylesheet injection.
+
+The controller also provides a **Refresh & diagnose blue AI responses** action for checking detected response blocks and text styling.
+
+**Verification note:** Offline browser tests cover response styling. Live website rendering can differ, and response coloring must be visually verified on both supported websites. This feature should not be treated as fully validated if responses still appear black.
+
+### 2.5 Standalone Desktop Architecture
+
+WalledGuard uses:
+
+- Electron for the desktop controller and native dialogs.
+- Google Chrome as the managed browser.
+- Chrome DevTools Protocol for browser monitoring and interception.
+- Node.js for application logic and local file inspection.
+- PDF.js for extracting PDF content.
+- Tesseract.js for OCR processing.
+
+No browser extension is needed.
+
+---
+
+## 3. Installation and Setup
+
+### Prerequisites
+
+- macOS, Windows, or Linux
+- Node.js 22 or later
+- npm
+- Google Chrome
+- Internet connection for ChatGPT and Perplexity
+- An account on the respective AI website when its features require authentication
+
+The application has been developed and tested primarily on macOS.
+
+### Clone the Repository
 
 ```bash
-cd walledguard-dlp       # folder obtained by extracting the new ZIP
-nvm use 22               # only if you installed Node using nvm
-npm ci                   # installs dependencies from package-lock.json
-npm run doctor           # checks Chrome and bundled OCR data
+git clone https://github.com/AbhishekAgrahari22/walledguard-dlp.git
+cd walledguard-dlp
+```
+
+### Install Dependencies
+
+```bash
+npm ci
+```
+
+If Node.js was installed using `nvm`, select Node 22:
+
+```bash
+nvm use 22
+```
+
+### Check the Environment
+
+```bash
+npm run doctor
+```
+
+This checks the Node.js environment, Chrome installation, Electron dependency, and file-inspection resources.
+
+### Verify JavaScript Syntax
+
+```bash
 npm run syntax
-npm test                 # unit tests + genuine TXT/PDF/PNG OCR tests
-npm run smoke:chrome     # optional: offline simulated Chrome interactions
+```
+
+### Run Automated Tests
+
+```bash
+npm test
+```
+
+### Run Offline Browser Integration Tests
+
+```bash
+npm run smoke:chrome
+```
+
+These tests use simulated web pages to validate interception and browser behavior. They do not replace live testing on ChatGPT and Perplexity.
+
+### Start the Application
+
+```bash
 npm start
 ```
 
-**What you should see:** Two windows, not one:
-1. **WalledGuard DLP** — Electron desktop controller with status, buttons and safe connection diagnostics.
-2. **Google Chrome** — a separate, dedicated Chrome profile that opens `https://chatgpt.com/`. ChatGPT is **not embedded in Electron**.
+Two windows should appear:
 
-### Google login rejected? Use the built-in sign-in handoff
+1. **WalledGuard DLP Controller:** Displays protection status, browser controls, and diagnostic information.
+2. **Managed Google Chrome:** Opens ChatGPT and supports navigation to Perplexity.
 
-If Google displays **"Couldn't sign you in — This browser or app may not be secure"** in managed Chrome:
+Keep the controller running while using the protected browser.
 
-1. In WalledGuard, click **Google login blocked? Open ordinary Chrome for sign-in**.
-2. Read and accept the native warning. The protected Chrome process closes, then **normal Chrome opens with the same dedicated profile but NO remote debugging**.
-3. **DLP IS OFF IN SIGN-IN MODE.** Only visit the login pages; do not type prompts, attach files, or send private data.
-4. In that normal Chrome window, log into ChatGPT (or Perplexity) using the provider's official login flow. You can navigate to `https://www.perplexity.ai/` if you need to sign in there too.
-5. Click **Finish sign-in & resume protection** in WalledGuard. It closes ordinary Chrome and reopens the dedicated profile under monitoring. The controller status must no longer say **DLP PAUSED** before you resume chatting.
-6. Verify that the ChatGPT/Perplexity login persisted. The login handoff is the safest available compatibility attempt for Google OAuth; **there is no guarantee Google or the website will accept the account**. Do not disable browser security or impersonate another browser.
+---
 
-For accounts originally registered with **Continue with Google**, an email/password login may not be available; the handoff keeps Google's normal sign-in flow rather than trying to change authentication mechanisms.
+## 4. How to Use WalledGuard
 
-In the controller choose **Open Perplexity** to open `https://www.perplexity.ai/` in another protected Chrome tab. You can sign in within the Chrome window. Sign-in cookies are stored in WalledGuard's separate Chrome profile, not your everyday Chrome profile.
+### Step 1 — Launch the Application
 
-**Keep the WalledGuard controller running** while using the Chrome window it launched. Closing the controller attempts to close the managed Chrome process. Regular Chrome, Safari and Firefox windows are **not protected** by this app.
-
-For Windows/Linux, also install Google Chrome and use the same npm commands. You may explicitly select another compatible Chromium binary:
+Run:
 
 ```bash
-WALLEDGUARD_CHROME_PATH="/path/to/chrome" npm start
+npm start
 ```
 
-On Windows PowerShell: `$env:WALLEDGUARD_CHROME_PATH = 'C:\Path\To\chrome.exe'`; then `npm start`.
+Confirm that WalledGuard reports:
 
-## Why v2 uses managed Chrome instead of embedded Electron
+**Protected Chrome browser ready**
 
-The original project used Electron's Chromium window to load ChatGPT. Loading HTML and JavaScript only proves that the homepage rendered; it does not prove that login, streaming, or backend API requests succeed. Some providers may treat embedded clients differently. v2 uses a dedicated **real Chrome application process** for those websites. The Electron process provides the **native OS dialogs**, file inspection, and controls. CDP lets the desktop app inject early event guards and style assistant replies without using an extension.
+or
 
-Chrome 136+ requires a **non-default user data directory** when remote debugging is enabled. WalledGuard deliberately creates a dedicated profile under its application data directory. This also keeps daily Chrome credentials separate. The debugging endpoint is bound to localhost, with an OS-assigned random port. Do not use the managed profile for unrelated sensitive browsing; other local processes with access to the debugging port could potentially inspect it.
+**Monitoring managed Chrome**
 
-## Assignment acceptance checklist
+### Step 2 — Open ChatGPT
 
-| Requirement | Implementation |
-|---|---|
-| Harmless prompt | Early capturing-phase listeners leave submission unchanged |
-| Sensitive prompt | Capture Enter / send-button click / form submit; native Continue/Cancel before replay |
-| TXT files | UTF-8/UTF-16 decoding; exact `WALLED_SENSITIVE` search |
-| PDF | PDF.js text extraction and local OCR of each rendered page |
-| Images | Tesseract.js local OCR, plus literal metadata/byte scan |
-| Native confirmation | Electron `dialog.showMessageBox`, buttons **Continue** and **Cancel** |
-| Continue | Replays prompt using trusted Chrome input; file picker uses original file paths/bytes |
-| Cancel | Does not replay prompt; does not attach/copy unapproved file to form |
-| AI response color | Expanded dynamic assistant selectors PLUS a CDP via-inspector stylesheet for stronger blue styling, without recoloring user prompts |
-| Defense in depth | CDP Fetch interception for readable sensitive XHR/Fetch POST/PATCH/PUT bodies |
-| No browser extension | Uses one standalone Electron controller and a Chrome process launched by the app |
+Use the **Open ChatGPT** button in the WalledGuard controller.
 
-**Scope of testing:** Source checks and unit tests were run during the rebuild. An offline Chromium smoke test (`npm run smoke:chrome`) confirmed prompt Cancel, prompt Continue, file picker handoff and blue response text against a *mock page*. This is **not** a claim of successful live end-to-end checks on ChatGPT and Perplexity; those must be recorded on a Mac with internet and valid site sessions. See [Demo Plan](docs/DEMO_PLAN.md).
+Enter a normal prompt:
 
-## Color styling diagnostics
+```text
+Explain data loss prevention in two sentences.
+```
 
-The controller has a **Refresh & diagnose blue AI responses** button. Open a ChatGPT or Perplexity conversation with a visible model answer, click it, and check the activity log for the number of matched assistant response blocks. The app applies blue rules through Chrome's CSS domain (a via-inspector stylesheet) as well as through DOM-based styling. If the reply remains black or the log shows zero matches, the site likely changed its markup. Share only the count and a redacted screenshot; do not copy message contents into an issue.
+Expected behavior: The prompt is submitted without a sensitivity warning.
 
-## Manual walkthrough
+### Step 3 — Test Sensitive Prompt Detection
 
-1. Launch WalledGuard with `npm start`; in the **separate managed Chrome** window, log into ChatGPT if prompted.
-2. Send `Hello, how are you?` — **no WalledGuard dialog** should appear.
-3. Send `Project key: WALLED_SENSITIVE` — a **native desktop** warning should say the marker was found in a **TEXT PROMPT**.
-4. Choose **Cancel**: message stays editable; it must not be sent. Repeat and choose **Continue**: original prompt should be sent.
-5. Upload `fixtures/sensitive.txt`, `fixtures/sensitive.pdf`, and `fixtures/sensitive.png` one at a time. A warning should identify each **FILE**. Try both decisions.
-6. Try `fixtures/normal.txt`, `fixtures/normal.pdf`, `fixtures/normal.png` — file selection should proceed without a sensitivity dialog. Scanning may take time, particularly PDF OCR.
-7. Check that **AI-generated** response text is blue. Switch to **Open Perplexity** and repeat the steps.
+Enter:
 
-The marker is **literal and case-sensitive** in regular prompt/digital text detection. OCR normalization is more tolerant of spaces and underscores because optical recognition can split characters.
+```text
+My confidential test code is WALLED_SENSITIVE.
+```
 
-## Project layout
+Expected behavior: A native desktop dialog appears indicating that sensitive content was detected in a text prompt.
+
+Choose **Cancel** to prevent submission.
+
+Repeat the test and choose **Continue** to allow the original prompt.
+
+### Step 4 — Test File Upload Protection
+
+The repository contains sample files in the `fixtures/` directory.
+
+Sensitive test files:
+
+- `fixtures/sensitive.txt`
+- `fixtures/sensitive.pdf`
+- `fixtures/sensitive.png`
+
+Normal test files:
+
+- `fixtures/normal.txt`
+- `fixtures/normal.pdf`
+- `fixtures/normal.png`
+
+For each sensitive file:
+
+1. Select the file using the AI website's upload control.
+2. Verify that a native file confirmation dialog appears.
+3. Click **Cancel** and confirm that the file is not attached.
+4. Select the same file again.
+5. Click **Continue** and verify that the original file proceeds.
+
+Normal files should proceed without a sensitive-content confirmation.
+
+Some website features may require authentication or have provider-specific upload limitations.
+
+### Step 5 — Test Perplexity
+
+In the WalledGuard controller, select **Open Perplexity**.
+
+Normal test prompt:
+
+```text
+What is data loss prevention?
+```
+
+Sensitive test prompt:
+
+```text
+Explain the marker WALLED_SENSITIVE.
+```
+
+Repeat the Cancel and Continue tests.
+
+Where supported by Perplexity's interface, repeat the TXT, PDF, and image file-upload tests.
+
+### Step 6 — Verify Response Styling
+
+Request an AI-generated response:
+
+```text
+List three cybersecurity best practices.
+```
+
+The intended behavior is to display AI-generated text in blue without changing user prompt styling.
+
+If the response remains black, select **Refresh & diagnose blue AI responses** in the WalledGuard controller.
+
+Check the diagnostic output and record the actual result.
+
+---
+
+## 5. Architecture Overview
+
+WalledGuard uses a desktop-controller and managed-browser architecture.
+
+### 5.1 Electron Desktop Controller
+
+Electron provides:
+
+- Desktop application interface.
+- Native Continue/Cancel dialogs.
+- File-inspection coordination.
+- Browser session management.
+- Protection status and diagnostics.
+
+### 5.2 Managed Chrome Browser
+
+WalledGuard launches a dedicated Google Chrome instance.
+
+The desktop application connects to that Chrome process through the Chrome DevTools Protocol.
+
+The application monitors supported ChatGPT and Perplexity pages inside this managed browser.
+
+Normal browser sessions that were not launched by WalledGuard are outside the monitoring scope.
+
+### 5.3 Prompt Interception
+
+The application installs page-level monitoring logic through CDP.
+
+It uses capturing-phase event listeners to inspect common prompt submission actions, including:
+
+- Enter-key submissions.
+- Send-button clicks.
+- Form submission events.
+
+When the sensitive marker is present, the application requests a native confirmation decision before proceeding.
+
+### 5.4 File Inspection
+
+The application coordinates file selection with local inspection.
+
+TXT files are decoded and searched for the sensitive marker.
+
+PDF files are processed using text extraction and OCR.
+
+Image files are processed using OCR to identify the marker in visible image content.
+
+Unsupported formats or files exceeding configured inspection limits are blocked rather than silently assumed safe.
+
+### 5.5 Continue and Cancel Enforcement
+
+**Continue:** The application allows the original user action to proceed.
+
+**Cancel:** The intercepted action is not replayed, preventing the corresponding submission or attachment through the monitored workflow.
+
+### 5.6 Network-Level Backstop
+
+WalledGuard also includes Chrome DevTools Protocol request interception for supported readable outgoing request bodies.
+
+This provides an additional protection layer but does not guarantee visibility into every possible transport mechanism.
+
+### 5.7 AI Response Styling
+
+The response-color customization layer identifies assistant response containers and applies blue text styling through DOM manipulation and Chrome stylesheet injection.
+
+Because ChatGPT and Perplexity interfaces change over time, live styling should be retested against their current page structures.
+
+---
+
+## 6. Project Structure
 
 ```text
 walledguard-dlp/
-├── package.json, package-lock.json
+├── README.md
+├── LICENSE
+├── NOTICE.md
+├── package.json
+├── package-lock.json
 ├── src/
-│   ├── main.js                        Electron controller, scanning and native dialogs
-│   ├── controller/                     Local dashboard UI (HTML/JS + secure preload)
+│   ├── main.js
+│   ├── controller/
 │   ├── chrome/
-│   │   ├── chrome-path.js              Locate Google Chrome
-│   │   ├── cdp.js                      Minimal WebSocket/CDP command client
-│   │   ├── controller.js               Launch Chrome, monitor tabs, file chooser, Fetch backstop
-│   │   ├── injected.js                 Early prompt/file guards + blue answer CSS
-│   │   └── request-policy.js           Origin and HTTP body policy helpers
-│   ├── inspection/marker.js            Marker, signatures and text decoding
-│   ├── inspection/scanner.js           Real PDF extraction and local image OCR
-│   └── interception/request-guard.js   Short-lived network approval state
-├── assets/tessdata/eng.traineddata    Bundled offline English OCR data
-├── fixtures/                          Real normal/sensitive TXT, PDF and PNG samples
-├── tests/                             Unit and file-scanning integration tests
-├── scripts/check-environment.js       `npm run doctor`
+│   │   ├── chrome-path.js
+│   │   ├── cdp.js
+│   │   ├── controller.js
+│   │   ├── injected.js
+│   │   ├── request-policy.js
+│   │   └── response-style.js
+│   ├── inspection/
+│   │   ├── marker.js
+│   │   └── scanner.js
+│   └── interception/
+│       └── request-guard.js
+├── assets/
+│   └── tessdata/
+├── fixtures/
+├── tests/
+├── scripts/
 └── docs/
     ├── ARCHITECTURE.md
     ├── TROUBLESHOOTING.md
@@ -119,36 +390,168 @@ walledguard-dlp/
     └── SUBMISSION_CHECKLIST.md
 ```
 
-## Build a desktop app
+Additional technical details are available in [Architecture Documentation](docs/ARCHITECTURE.md).
+
+---
+
+## 7. Testing and Validation
+
+The project includes automated tests and browser smoke tests.
+
+### Unit and Integration Tests
+
+Run:
+
+```bash
+npm test
+```
+
+These tests cover:
+
+- Sensitive-marker detection.
+- Text encoding support.
+- PDF content extraction.
+- Image OCR.
+- Prompt approval behavior.
+- File approval behavior.
+- HTTP request policy checks.
+- Selected browser and styling helpers.
+
+### Offline Browser Tests
+
+Run:
+
+```bash
+npm run smoke:chrome
+```
+
+The offline smoke tests verify representative browser interactions, including:
+
+- Normal prompt handling.
+- Sensitive prompt Cancel and Continue.
+- File selection after inspection.
+- Response styling against simulated page structures.
+- Representative ChatGPT and Perplexity page behavior.
+
+**Important:** Offline smoke tests use local mock pages. They do not establish that every feature works on the live ChatGPT and Perplexity websites.
+
+### Live Website Testing
+
+The application must also be tested directly on:
+
+- https://chatgpt.com
+- https://www.perplexity.ai
+
+Live verification should include prompt handling, file uploads, both dialog actions, and response styling.
+
+---
+
+## 8. Google Sign-In and Session Handling
+
+Some authentication providers may reject Chrome sessions controlled through automation or debugging interfaces.
+
+WalledGuard provides a separate sign-in handoff workflow.
+
+If authentication fails:
+
+1. Click **Google login blocked? Open ordinary Chrome for sign-in**.
+2. Accept the native warning.
+3. Use the ordinary Chrome window to complete authentication.
+4. Return to WalledGuard.
+5. Click **Finish sign-in & resume protection**.
+6. Verify that monitoring has resumed.
+
+**Security warning:** DLP monitoring is paused during sign-in mode.
+
+Do not submit AI prompts, attach files, or transmit confidential information while protection is paused.
+
+Authentication success depends on the provider's security policies and is not guaranteed.
+
+---
+
+## 9. Security and Reliability Limitations
+
+WalledGuard is an interview-assignment prototype, not a production-certified enterprise DLP product.
+
+Important limitations include:
+
+- Monitoring applies only to Chrome sessions launched and managed by WalledGuard.
+- Website updates can change the DOM structure and break particular event selectors.
+- Not every network transport exposes its request body to CDP interception.
+- Certain browser APIs may require additional interception handling.
+- OCR can miss small, handwritten, distorted, or low-contrast text.
+- Google or other authentication services may restrict monitored browser sessions.
+- Local debugging interfaces introduce additional security considerations.
+- AI-response styling can require updates when ChatGPT or Perplexity changes its UI.
+
+The application uses a dedicated browser profile and local inspection components to reduce unnecessary access to personal browser sessions.
+
+The implementation should not be represented as providing complete prevention against every possible data-exfiltration technique.
+
+---
+
+## 10. Privacy and Data Handling
+
+File inspection and OCR are performed locally by the desktop application.
+
+The application is designed not to log confidential prompt contents, uploaded file contents, authentication cookies, or access tokens as part of its normal diagnostics.
+
+When the user chooses Continue, the original content proceeds to the selected AI website.
+
+When content is non-sensitive, normal user actions proceed without a sensitivity warning.
+
+---
+
+## 11. Build the Desktop Application
+
+To build a platform-specific desktop application, run:
 
 ```bash
 npm run build
 ```
 
-Uses `electron-builder` to create a platform installer: `.dmg` on macOS, `.exe` on Windows, `.AppImage` on Linux (build on the target OS; signing/notarization can be needed). A built app includes Electron, OCR runtime, Tesseract language data, and UI, but **still requires Google Chrome installed**. `npm run dist` creates an unpacked app. Test the installed build before sharing it.
+The project uses Electron Builder.
 
-## Security and reliability limitations
+Platform-specific packaging and code-signing requirements may apply.
 
-- **Only tabs inside the Chrome instance launched and monitored by WalledGuard are protected.** No arbitrary external browser windows are monitored.
-- The DOM submission listeners cover common ChatGPT/Perplexity web UI paths; site updates can change selectors or introduce new submission paths. Retest against current sites.
-- The CDP Fetch backstop inspects readable XHR/Fetch bodies. Multipart file bodies, streams, WebSockets, service-worker paths and other browser-private transports may not expose every byte. File-picker, drag/drop, and paste interception are the primary file gate.
-- Native file chooser interception is reliable for normal `<input type=file>` flows; browser APIs or redesigned sites might bypass those selectors and require new handling.
-- Some apps might reject synthetic drag/drop/paste event replay or certain browser/authentication environments. Google OAuth can reject Chrome controlled via CDP; sign-in handoff temporarily suspends DLP and might not always solve this. Native file-picker Continue uses Chrome's own `DOM.setFileInputFiles` and original file paths.
-- OCR can misread extremely small, handwritten, distorted or low-contrast marker text. Unsupported formats and files larger than 32 MiB are **blocked**, not assumed safe.
-- A local Chrome debugging endpoint increases local-machine security exposure. Dedicated profile, random localhost port and browser shutdown on disconnection reduce but do not eliminate that risk.
-- Do **not** claim 100% leak prevention or production readiness. This is a maintainable interview prototype; production DLP would need extensive regression, site-policy validation, signed builds, and broader egress enforcement.
+The resulting desktop application still requires an installed compatible Google Chrome browser.
 
-More: [Architecture](docs/ARCHITECTURE.md) · [Troubleshooting](docs/TROUBLESHOOTING.md) · [Demo](docs/DEMO_PLAN.md) · [Submission](docs/SUBMISSION_CHECKLIST.md).
+---
 
-## License / privacy
+## 12. Additional Documentation
 
-MIT license, see `LICENSE`. All inspections and OCR occur locally in the desktop process. The app deliberately does not log prompt text, file contents, cookies, access tokens, or full request URLs. Normal operation **does send** the original data to ChatGPT/Perplexity after your Continue decision or after a normal non-sensitive action; that is the intended user action.
+- [Architecture Overview](docs/ARCHITECTURE.md)
+- [Troubleshooting Guide](docs/TROUBLESHOOTING.md)
+- [Demonstration Plan](docs/DEMO_PLAN.md)
+- [Interview Explanation](docs/INTERVIEW_EXPLANATION.md)
+- [Submission Checklist](docs/SUBMISSION_CHECKLIST.md)
 
-## v2.3 response-text visual verification
+---
 
-If WalledGuard reports an assistant response but you still see black text, use
-**Refresh & diagnose blue AI responses**. Diagnostics now count visible text
-leaves as blue or not blue; they do not log prompt/answer content. This also
-styles assistant paragraphs outside `.markdown` wrappers. Do not claim the live
-coloring requirement passed unless the answer actually appears blue in the
-browser. The offline mock tests are not proof of live-site compatibility.
+## 13. Assignment Submission
+
+**Source Code:**  
+https://github.com/AbhishekAgrahari22/walledguard-dlp
+
+**Demonstration Video:**  
+https://github.com/AbhishekAgrahari22/walledguard-dlp/releases/tag/v1.0-demo
+
+The video is attached to the GitHub release as `WalledGuard_DLP_Demo.mov`.
+
+The assignment submission form also requires a publicly accessible CV link.
+
+All submission links should be tested in a private/incognito browser window to confirm they work without requiring a sign-in or access request.
+
+---
+
+## 14. License
+
+This project is distributed under the MIT License.
+
+See [LICENSE](LICENSE) for details.
+
+---
+
+**WalledGuard DLP v2.3 — Standalone GenAI Data Loss Prevention Desktop Application**
+
+Built using Electron, Node.js, managed Google Chrome, Chrome DevTools Protocol, PDF.js, and Tesseract.js.

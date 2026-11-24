@@ -1,0 +1,77 @@
+{
+  "name": "walledguard-dlp",
+  "version": "2.3.0",
+  "private": true,
+  "description": "Standalone Electron DLP controller for managed Chrome (CDP, no extension) with local OCR, native dialogs and AI response styling",
+  "main": "src/main.js",
+  "license": "MIT",
+  "scripts": {
+    "start": "electron .",
+    "test": "node --test tests/*.test.js",
+    "syntax": "node --check src/main.js && node --check src/chrome/chrome-path.js && node --check src/chrome/cdp.js && node --check src/chrome/controller.js && node --check src/chrome/request-policy.js && node --check src/chrome/injected.js && node --check src/chrome/response-style.js && node --check src/controller/preload.js && node --check src/controller/renderer.js && node --check src/inspection/scanner.js && node --check src/inspection/marker.js && node --check src/interception/request-guard.js && node --check scripts/check-environment.js && node --check scripts/browser-smoke.js",
+    "fixtures": "node scripts/make-fixtures.js",
+    "dist": "electron-builder --dir",
+    "build": "electron-builder",
+    "doctor": "node scripts/check-environment.js",
+    "test:unit": "node --test tests/marker.test.js tests/request-guard.test.js tests/chrome.test.js",
+    "smoke:chrome": "node scripts/browser-smoke.js"
+  },
+  "dependencies": {
+    "@napi-rs/canvas": "^0.1.79",
+    "pdfjs-dist": "^4.10.38",
+    "tesseract.js": "^6.0.1"
+  },
+  "devDependencies": {
+    "electron": "^45.4.1",
+    "electron-builder": "^26.0.12"
+  },
+  "build": {
+    "appId": "dev.walledguard.dlp",
+    "productName": "WalledGuard DLP",
+    "files": [
+      "src/**/*",
+      "package.json",
+      "LICENSE",
+      "NOTICE.md"
+    ],
+    "asarUnpack": [
+      "node_modules/@napi-rs/canvas/**/*",
+      "node_modules/tesseract.js/**/*",
+      "node_modules/tesseract.js-core/**/*",
+      "node_modules/@napi-rs/**/*"
+    ],
+    "extraResources": [
+      {
+        "from": "assets/tessdata",
+        "to": "tessdata",
+        "filter": [
+          "**/*"
+        ]
+      }
+    ],
+    "directories": {
+      "output": "dist"
+    },
+    "win": {
+      "target": [
+        "nsis"
+      ],
+      "artifactName": "${productName}-${version}-Windows.${ext}"
+    },
+    "mac": {
+      "target": [
+        "dmg"
+      ],
+      "artifactName": "${productName}-${version}-macOS.${ext}"
+    },
+    "linux": {
+      "target": [
+        "AppImage"
+      ],
+      "artifactName": "${productName}-${version}-Linux.${ext}"
+    }
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

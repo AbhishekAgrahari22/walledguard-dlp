@@ -1,0 +1,35 @@
+# Dependencies
+node_modules/
+
+# macOS
+.DS_Store
+
+# Logs
+*.log
+npm-debug.log*
+
+# Sensitive configuration
+.env
+.env.*
+!.env.example
+*.pem
+*.p12
+*.pfx
+*.key
+
+# Browser sessions and credentials
+chrome-profile/
+chrome-data/
+browser-profile/
+user-data/
+.user-data/
+
+# Generated output
+dist/
+out/
+release/
+
+# Video recordings
+recordings/
+*.mp4
+*.mov
